@@ -187,16 +187,16 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
   cli.show_server_banner = lambda *x: None
 
   # Prepare tmp dir and log file.
-  base_path = tmp_dir + '/visual-blocks-colab';
+  base_path = f'{tmp_dir}/visual-blocks-colab';
   if os.path.exists(base_path):
     shutil.rmtree(base_path)
   os.mkdir(base_path)
-  log_file_path = base_path + '/log'
+  log_file_path = f'{base_path}/log'
   open(log_file_path, 'w').close()
 
   # Download the zip file that bundles the visual blocks web app.
   bundle_target_path = os.path.join(base_path, 'visual_blocks.zip')
-  url = 'https://storage.googleapis.com/tfweb/rapsai-colab-bundles/visual_blocks_%s.zip' % _VISUAL_BLOCKS_BUNDLE_VERSION
+  url = f'https://storage.googleapis.com/tfweb/rapsai-colab-bundles/visual_blocks_{_VISUAL_BLOCKS_BUNDLE_VERSION}.zip'
   r = requests.get(url)
   with open(bundle_target_path , 'wb') as zip_file:
     zip_file.write(r.content)
@@ -218,14 +218,11 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
   def list_inference_functions():
     result = {}
     if len(GENERIC_FNS):
-      result['generic'] = list(GENERIC_FNS.keys())
-      result['generic'].sort()
+      result['generic'] = sorted(GENERIC_FNS.keys())
     if len(TEXT_TO_TEXT_FNS):
-      result['text_to_text'] = list(TEXT_TO_TEXT_FNS.keys())
-      result['text_to_text'].sort()
+      result['text_to_text'] = sorted(TEXT_TO_TEXT_FNS.keys())
     if len(TEXT_TO_TENSORS_FNS):
-      result['text_to_tensors'] = list(TEXT_TO_TENSORS_FNS.keys())
-      result['text_to_tensors'].sort()
+      result['text_to_tensors'] = sorted(TEXT_TO_TENSORS_FNS.keys())
     return _make_json_response(result)
 
   # Note: using "/api/..." for POST requests is not allowed.
@@ -239,7 +236,10 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
       input_tensors = [_json_to_ndarray(x) for x in request.json['tensors']]
       output_tensors = inference_fn(input_tensors)
       if not _is_list_of_nd_array(output_tensors):
-        result = {'error': 'The returned value from %s is not a list of ndarray' % func_name}
+        result = {
+            'error':
+            f'The returned value from {func_name} is not a list of ndarray'
+        }
       else:
         result['tensors'] = [_ndarray_to_json(x) for x in output_tensors]
     except Exception as e:
@@ -259,7 +259,7 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
       text = request.json['text']
       ret = inference_fn(text)
       if not isinstance(ret, str):
-        result = {'error': 'The returned value from %s is not a string' % func_name}
+        result = {'error': f'The returned value from {func_name} is not a string'}
       else:
         result['text'] = ret
     except Exception as e:
@@ -279,7 +279,10 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
       text = request.json['text']
       output_tensors = inference_fn(text)
       if not _is_list_of_nd_array(output_tensors):
-        result = {'error': 'The returned value from %s is not a list of ndarray' % func_name}
+        result = {
+            'error':
+            f'The returned value from {func_name} is not a list of ndarray'
+        }
       else:
         result['tensors'] = [_ndarray_to_json(x) for x in output_tensors]
     except Exception as e:
@@ -334,7 +337,8 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
     if pipeline_json == '':
       replacements.append(('%PIPELINE_JSON%', ''))
     else:
-      replacements.append(('%PIPELINE_JSON%', '?project=%s' % urllib.parse.quote(pipeline_json)))
+      replacements.append(
+          ('%PIPELINE_JSON%', f'?project={urllib.parse.quote(pipeline_json)}'))
 
     for (k, v) in replacements:
         shell = shell.replace(k, v)
@@ -428,7 +432,6 @@ def Server(generic=None, text_to_text=None, text_to_tensors=None, height=900, tm
   # Read the saved pipeline json.
   pipeline_json = read_pipeline_json_from_notebook()
 
-  # A thin wrapper class for exposing a "display" method.
   class _Server:
     def display(self):
       show_controls()
